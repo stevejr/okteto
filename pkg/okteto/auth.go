@@ -109,7 +109,7 @@ func Auth(ctx context.Context, code, url string) (*User, error) {
 
 func saveAuthData(user *User, url string) error {
 	if user.GithubID == "" || user.Token == "" {
-		return fmt.Errorf("empty response")
+		return fmt.Errorf("empty login response")
 	}
 
 	if err := saveToken(user.ID, user.Token, url, user.Registry, user.Buildkit); err != nil {
@@ -118,10 +118,22 @@ func saveAuthData(user *User, url string) error {
 
 	d, err := base64.StdEncoding.DecodeString(user.Certificate)
 	if err != nil {
-		return fmt.Errorf("bad response: %w", err)
+		return fmt.Errorf("login response had a bad certificate: %w", err)
 	}
 
-	return ioutil.WriteFile(GetCertificatePath(), d, 0600)
+	if len(d) == 0 {
+		return fmt.Errorf("login response had an empty certificate: %w", err)
+	}
+
+	log.Infof("saving buildkit certificate: %s", user.Certificate)
+
+	c := GetCertificatePath()
+	err = ioutil.WriteFile(c, d, 0600)
+	if err == nil {
+		log.Infof("saved buildkit certificate at %s", c)
+	}
+
+	return err
 }
 
 func queryUser(ctx context.Context, client *graphql.Client, token string) (*q, error) {
