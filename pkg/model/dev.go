@@ -506,7 +506,7 @@ func (dev *Dev) LoadRemote(pubKeyPath string) {
 	p := Secret{
 		LocalPath:  pubKeyPath,
 		RemotePath: authorizedKeysPath,
-		Mode:       0600,
+		Mode:       0444,
 	}
 
 	log.Infof("enabled remote mode")
@@ -663,6 +663,14 @@ func (dev *Dev) ToTranslationRule(main *Dev) *TranslationRule {
 		rule.Command = []string{"/var/okteto/bin/start.sh"}
 		if main.RemoteModeEnabled() {
 			rule.Args = []string{"-r"}
+			rule.Volumes = append(
+				rule.Volumes,
+				VolumeMount{
+					Name:      main.GetVolumeName(),
+					MountPath: "/var/okteto/remote",
+					SubPath:   "okteto-remote",
+				},
+			)
 		} else {
 			rule.Args = []string{}
 		}
