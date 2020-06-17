@@ -15,6 +15,8 @@ package utils
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/okteto/okteto/pkg/errors"
 	"github.com/okteto/okteto/pkg/log"
@@ -93,4 +95,18 @@ func AskIfDeploy(name, namespace string) error {
 		}
 	}
 	return nil
+}
+
+//ParseURL validates a URL
+func ParseURL(u string) (string, error) {
+	url, err := url.Parse(u)
+	if err != nil {
+		return "", fmt.Errorf("%s is not a valid URL", u)
+	}
+
+	if url.Scheme == "" {
+		url.Scheme = "https"
+	}
+
+	return strings.TrimRight(url.String(), "/"), nil
 }
